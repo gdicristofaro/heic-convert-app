@@ -3,13 +3,17 @@ import heic2any from "heic2any";
 import JSZip from "jszip";
 
 
-export const convert = async (files: File[]) => {
+export const convert = async (files: File[], processingMessageStatus: undefined | ((msg: string) => void) = undefined) => {
  
     const zip = new JSZip();
     const usedNames = new Set<string>();
 
     // for each file, convert to a series of jpgs,
     for (let origFile of files) {
+        if (processingMessageStatus) {
+            processingMessageStatus("Processing: " + origFile.name);
+        }
+
         try {
             let retData = await heic2any({
                 blob: origFile,
@@ -25,6 +29,9 @@ export const convert = async (files: File[]) => {
                 zip.file(fileName, jpg);
             }
         } catch (ex) {
+            if (processingMessageStatus) {
+                processingMessageStatus("Unable to process file: " + origFile.name);
+            }
             console.warn("Unable to process file: ", origFile, ex);
             console.info(origFile, ex);
         }
@@ -75,9 +82,15 @@ function getBlobArr(retData: Blob | Blob[]): Blob[] {
     }
 }
 
-export const convertAndDownload = async (files: File[]) => {
-    let zipToDownload = await convert(files);
+export const convertAndDownload = async (files: File[], processingMessageStatus: undefined | ((msg: string) => void) = undefined) => {
+    let zipToDownload = await convert(files, processingMessageStatus);
+    if (processingMessageStatus) {
+        processingMessageStatus("Preparing zip...");
+    }
     FileSaver.saveAs(zipToDownload, getZipDownloadName());
+    if (processingMessageStatus) {
+        processingMessageStatus("");
+    }
 }
 
 

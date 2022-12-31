@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { convertAndDownload } from './convertHeif';
 import Dropzone, { DropEvent, FileRejection, useDropzone } from 'react-dropzone'
 
@@ -32,11 +32,12 @@ const rejectStyle = {
 };
 
 
-function handleFormEvt(acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) {
-  convertAndDownload(acceptedFiles);
+function handleFormEvt(acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent, processingMessageStatus: undefined | ((msg: string) => void) = undefined) {
+  convertAndDownload(acceptedFiles, processingMessageStatus);
 }
 
 function App() {
+  let [processingMessage, setProcessingMessage] = useState("");
   const {
     getRootProps,
     getInputProps,
@@ -44,8 +45,8 @@ function App() {
     isDragAccept,
     isDragReject
   } = useDropzone({
-    accept: { "image/*": [".heic", ".heif"] },
-    onDrop: handleFormEvt,
+    // accept: { "image/*": [".heic", ".heif"] },
+    onDrop: (accepted, rej, evt) => handleFormEvt(accepted, rej, evt, setProcessingMessage),
     minSize: 0,
     multiple: true
   });
@@ -69,6 +70,9 @@ function App() {
           <input {...getInputProps()} />
           <p>Drag 'n' drop heic files here, or click to select files</p>
         </div>
+      </div>
+      <div>
+        <p>{processingMessage}</p>
       </div>
     </div>
   );
